@@ -1,15 +1,27 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, HttpStatus, Logger } from '@nestjs/common';
+import { Response } from 'express'
 import { CardsService } from './cards.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 
 @Controller('cards')
 export class CardsController {
+  private readonly logger = new Logger(CardsController.name);
+
   constructor(private readonly cardsService: CardsService) {}
 
   @Post()
-  create(@Body() createCardDto: CreateCardDto) {
-    return this.cardsService.create(createCardDto);
+  async create(@Body() createCardDto: CreateCardDto, @Res() res: Response) {
+    try {
+      return await this.cardsService.create(createCardDto)
+    } catch(error) {
+      const errorMessage = (error as Error).message
+
+      this.logger.error(errorMessage)
+
+      return res.status(HttpStatus.CONFLICT)
+        .json({ error: errorMessage })
+    }
   }
 
   @Get()

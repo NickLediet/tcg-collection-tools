@@ -10,12 +10,18 @@ export class CardsService {
 
   constructor(private prisma: PrismaService) {}
 
-  create(createCardDto: CreateCardDto): Promise<Card> {
+  async create(createCardDto: CreateCardDto): Promise<Card> {
+    const existingCard = await this.findByScryfallId(createCardDto.scryfall_id)
+    this.logger.log(existingCard)
+    if(existingCard) {
+      throw Error(`A card with the scryfall_id of '${createCardDto.scryfall_id}' already exists`)
+    }
+
     return this.prisma.card.create({ data: createCardDto })
   }
 
   findAll() {
-    return `This action returns all cards`;
+    return this.prisma.card.findMany();
   }
 
   findOne(id: number) {
@@ -28,5 +34,18 @@ export class CardsService {
 
   remove(id: number) {
     return `This action removes a #${id} card`;
+  }
+
+  findByScryfallId(scryfallId: string): Promise<Card | null> {
+    try {
+      return this.prisma.card.findFirst({
+        where: {
+          scryfall_id: scryfallId
+        }
+      })
+    } catch(error) {
+      this.logger.error(error)
+      return null
+    }
   }
 }
