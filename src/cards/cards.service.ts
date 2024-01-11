@@ -12,16 +12,16 @@ export class CardsService {
 
   async create(createCardDto: CreateCardDto): Promise<Card> {
     const existingCard = await this.findByScryfallId(createCardDto.scryfall_id)
-    this.logger.log(existingCard)
+
     if(existingCard) {
       throw Error(`A card with the scryfall_id of '${createCardDto.scryfall_id}' already exists`)
     }
-
-    return this.prisma.card.create({ data: createCardDto })
+    this.logger.log('Made it to line 19 of CardsService')
+    return await this.prisma.card.create({ data: createCardDto })
   }
 
-  findAll() {
-    return this.prisma.card.findMany();
+  async findAll() {
+    return await this.prisma.card.findMany();
   }
 
   findOne(id: number) {
@@ -32,8 +32,16 @@ export class CardsService {
     return `This action updates a #${id} card`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} card`;
+  remove(scryfallId: string): Promise<Card> {
+    try {
+      return this.prisma.card.delete({
+        where: {
+          scryfall_id: scryfallId
+        }
+      })
+    } catch(error) {
+      throw new Error(`Unable to delete card entry with the scryfall_id of ${scryfallId}. It likely does not exist.`)
+    }
   }
 
   findByScryfallId(scryfallId: string): Promise<Card | null> {

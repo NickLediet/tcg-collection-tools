@@ -1,32 +1,34 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, HttpStatus, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, HttpStatus } from '@nestjs/common';
 import { Response } from 'express'
 import { CardsService } from './cards.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
+import { BaseController } from './shared/base.controller';
 
 @Controller('cards')
-export class CardsController {
-  private readonly logger = new Logger(CardsController.name);
-
-  constructor(private readonly cardsService: CardsService) {}
+export class CardsController extends BaseController {
+  constructor(private readonly cardsService: CardsService) { super() }
 
   @Post()
-  async create(@Body() createCardDto: CreateCardDto, @Res() res: Response) {
+  async create(@Body() createCardDto: CreateCardDto, @Res() response: Response) {
     try {
-      return await this.cardsService.create(createCardDto)
+      const createdCard = await this.cardsService.create(createCardDto)
+      return response
+        .status(HttpStatus.CREATED)
+        .json(createdCard)
     } catch(error) {
       const errorMessage = (error as Error).message
-
-      this.logger.error(errorMessage)
-
-      return res.status(HttpStatus.CONFLICT)
-        .json({ error: errorMessage })
+      return this.sendErrorResponse({ 
+        errorMessage, 
+        statusCode: HttpStatus.CONFLICT,
+        response
+      })
     }
   }
 
   @Get()
-  findAll() {
-    return this.cardsService.findAll();
+  async findAll() {
+    return await this.cardsService.findAll();
   }
 
   @Get(':id')
@@ -39,8 +41,8 @@ export class CardsController {
     return this.cardsService.update(+id, updateCardDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.cardsService.remove(+id);
+  @Delete(':scryfall_id')
+  remove(@Param('scryfall_id') scryfallid: string) {
+    return this.cardsService.remove(scryfallid)
   }
 }
