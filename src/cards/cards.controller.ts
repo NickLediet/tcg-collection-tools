@@ -11,6 +11,7 @@ export class CardsController extends BaseController {
 
   @Post()
   async create(@Body() createCardDto: CreateCardDto, @Res() response: Response) {
+    this.logger.debug(createCardDto)
     try {
       const createdCard = await this.cardsService.create(createCardDto)
       return response
